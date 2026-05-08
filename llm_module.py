@@ -1,7 +1,8 @@
+import os
 from groq import Groq
 
-# 🔥 Add your API key here
-client = Groq(api_key="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")
+_groq_api_key = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=_groq_api_key) if _groq_api_key else None
 
 
 # ---------------- RULE-BASED BACKUP ----------------
@@ -41,9 +42,11 @@ def get_recommendation(disease, location, temperature=None, humidity=None):
 
 # ---------------- LLM FUNCTION ----------------
 def get_llm_recommendation(crop, disease, location, temperature, humidity):
+    if client is None:
+        raise ValueError("Missing GROQ_API_KEY environment variable")
 
     prompt = f"""
-    You are an agricultural expert.
+    You are an agricultural expert writing for a production web app.
 
     Crop: {crop}
     Disease: {disease}
@@ -51,13 +54,12 @@ def get_llm_recommendation(crop, disease, location, temperature, humidity):
     Temperature: {temperature}
     Humidity: {humidity}
 
-    Provide:
-    1. Explanation
-    2. Causes
-    3. Treatment
-    4. Prevention
-
-    Keep it simple.
+    Provide a concise, professional response in exactly 4 short bullet points:
+    - Issue
+    - Likely cause
+    - Immediate action
+    - Prevention
+    Keep each bullet under 12 words. No extra intro or outro text.
     """
 
     response = client.chat.completions.create(
